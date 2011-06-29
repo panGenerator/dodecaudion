@@ -25,7 +25,7 @@ void setup(){
   plot = createGraphics( width , height , JAVA2D );
   println( Serial.list() );
 
-  port = new Serial( this , Serial.list()[8] , 115200 );
+  port = new Serial( this , Serial.list()[6] , 115200 );
   port.bufferUntil( lf );
 
   osc = new OscP5( this , oscHost , oscHostPort , oscListenPort , oscP5Event );

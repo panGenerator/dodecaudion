@@ -64,7 +64,7 @@ void analogReadMultiplexer(){
   int row,r0,r1,r2; 
   int input = 0;
 
-  int analogPins[] = {4,5};
+  int analogPins[] = {0,1};
 
   input = -1;
   int i = 0;
