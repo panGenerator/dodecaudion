@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="lib" path="lib/processing/serial/library/serial.jar"/>
+	<classpathentry kind="lib" path="lib/processing/core.jar"/>
+	<classpathentry kind="lib" path="lib/oscP5/library/oscP5.jar" sourcepath="lib/oscP5/src/oscP5/OscP5.java"/>
+	<classpathentry kind="lib" path="lib/controlP5/library/controlP5.jar"/>
+	<classpathentry kind="lib" path="lib/processing/serial/library/librxtxSerial.jnilib"/>
+	<classpathentry kind="lib" path="lib/processing/serial/library/RXTXcomm.jar">
+		<attributes>
+			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="doddecaudion-gui/lib/processing/serial/library"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
