@@ -5,6 +5,7 @@ import netP5.*;
 PGraphics plot;
 
 Serial port;
+boolean serialConnectionEstablished = false;
 int lf = 10;
 float[] val = { 0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,};
 float[] val_prev = { 0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,};
@@ -12,6 +13,13 @@ int[] nonZeroVal = { 0,0,0,0,0,0,0,0,0,0,0,0};
 int[] avgLength = { 1,1,1,1,1,1,1,1,1,1,1,1};
 int plotHeight = 50;
 PFont font;
+
+// CALIBRATION
+boolean isCalibrating = true;
+int calibrationTime = 150;
+int calibrationStartTime = 0;
+float[] calibrationOffset = { 0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,};
+//
 
 OscP5 osc;
 int oscListenPort = 3333;
@@ -25,7 +33,7 @@ void setup(){
   plot = createGraphics( width , height , JAVA2D );
   println( Serial.list() );
 
-  port = new Serial( this , Serial.list()[6] , 115200 );
+  port = new Serial( this , Serial.list()[4] , 115200 );
   port.bufferUntil( lf );
 
   osc = new OscP5( this , oscHost , oscHostPort , oscListenPort , oscP5Event );
@@ -36,9 +44,48 @@ void setup(){
   frameRate( 30 );
 }
 
+
+void calibrate(){
+  
+  println(  calibrationOffset );
+  
+  if( calibrationTime >= ( frameCount - calibrationStartTime ) ){
+   
+    for( int i = 0 ; i < val.length ; i++ ){
+      
+     calibrationOffset[ i ] = ( calibrationOffset[ i ] + val[ i ] ) / 2.0; 
+  
+    }
+    
+    
+  }else{
+   
+   isCalibrating = false; 
+    
+  }
+    
+    
+  
+  
+}
+
+
+
+
 void draw(){
   background( 0 );
-
+  
+  if( !serialConnectionEstablished ){
+   return; 
+  }
+  
+  if( isCalibrating ){
+     
+    calibrate();
+    return;  
+    
+  }
+  
   //podziałka
   int w = 2 * 20;//round( width / s );
   for( int i = 0 ; i < width ; i = i+w ){
@@ -82,6 +129,8 @@ void draw(){
 }
 
 void stop(){
+  
+  port.clear();
   port.stop();
   //Wysyłanie komunikatów OSC
   OscMessage msg = osc.newMsg( "/Instrument01" );
@@ -92,7 +141,9 @@ void stop(){
   msg = osc.newMsg( "/Instrument02" );
   float[] data2 = { 0,val[0],val[1] };
   msg.add( data2 );
-  osc.send( msg );  
+  osc.send( msg );
+  
+  super.stop();
 
 }
 
@@ -100,8 +151,13 @@ void stop(){
 void serialEvent( Serial p ){
   try{
     String buffer = port.readStringUntil( lf );
+    
     if( buffer != null ){
+      
+      serialConnectionEstablished = true;
+      
       float[] _val = float( split(buffer,",") );
+      
       for( int i = 0 ; i < _val.length ; i++ ){
         if( !Float.isNaN( _val[i] ) ){
           val[ i ] = calcValAVG( _val[ i ] , i );
@@ -109,6 +165,8 @@ void serialEvent( Serial p ){
           val[ i ] = norm(val[i],0,1.0);
         }
       }
+      
+      
   
       //Wysyłanie komunikatów OSC
       OscMessage msg = osc.newMsg( "/Instrument01" );
@@ -134,6 +192,14 @@ void keyPressed(){
   if( key == 's' ){
     saveFrame( "screen-#####.png" );
   }
+  
+  if( key == 'c' ){
+  
+   calibrationStartTime = frameCount;
+   isCalibrating = true;
+  
+  } 
+  
 }
 
 
@@ -151,13 +217,13 @@ float calcValAVG( float v , int idx ){
   }
 
   //poprzednia wartość = aktualnie znana wartość.
-  val_prev[idx] = val[ idx ];   
+  //val_prev[idx] = val[ idx ];   
   
   //wyliczenie następnej wartości dla wymuszenia `v`
-  val_next = val_prev[idx] * ( avgLength[idx] - 1 ) / float( avgLength[idx] )  +  v / float( avgLength[idx] );
+  //val_next = val_prev[idx] * ( avgLength[idx] - 1 ) / float( avgLength[idx] )  +  v / float( avgLength[idx] );
 
   //tmp:
-  val_next = sin(PI*pow(val_next,2));
+  //val_next = sin(PI*pow(val_next,2));
   //val_next = sqrt(pow( -1+10*val_next , 2 ));
   //val_next = pow(sin( PI * val_next ),3);
 
@@ -183,7 +249,7 @@ float calcValAVG( float v , int idx ){
    val_next = val_next * nonZeroVal[idx]/signalTimeMinLength;
    }
    */
-  return val_next;
+  return max( 0, v - calibrationOffset[ idx ] );
 }
 
 
